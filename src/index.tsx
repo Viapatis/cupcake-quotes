@@ -9,6 +9,7 @@ ReactDOM.render(
     <QoutesGrid
       urlsAndNames={["first", "second", "third"].map(item => [`http://localhost:3000/api/v1/${item}`, item])}
       significantDigits={2}
+      rows={6}
     />
   </React.StrictMode>,
   document.getElementById('root')

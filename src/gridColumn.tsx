@@ -1,25 +1,25 @@
 import React from 'react';
+import './gridColumn.css';
+import { ColumnProperties } from './defColTypes';
 interface GridColumnProps {
-    colProps: Record<string, { value: string, bestChoice: boolean }>,
-    handleColProps: Record<string, { value: string, bestChoice: boolean }>
+    colProps: ColumnProperties,
+    handleColProps: ColumnProperties
 };
 class GridColumn extends React.Component<GridColumnProps, {}>{
 
     render() {
-     
         const { colProps, handleColProps } = this.props;
-        console.log(colProps);
-        const columnValues = [{ value: colProps.name.value, bestChoice: false }];
-        Object
-            .keys(handleColProps)
-            .filter(value => value !== 'name')
-            .sort((a, b) => (+handleColProps[a].value) - (+handleColProps[b].value))
-            .forEach(key => columnValues.push({ ...colProps[key] }));
+        const colValues = colProps.values, handleValues = handleColProps.values;
+        const columnValues = [{ value: colValues.name.value, bestChoice: false }];
+        handleColProps
+            .getRowHandles()
+            .sort((a, b) => (+handleValues[a].value) - (+handleValues[b].value))
+            .forEach(key => columnValues.push({ ...colValues[key] }));
         return (
             <div className='GridColumn'>
                 {columnValues.map((colProp, index) =>
-                    <div className={`qoutesGridCell${colProp.bestChoice ? ' bestChoice' : ''}`}>
-                        ${colProp.value}
+                    <div className={`GridCell${colProp.bestChoice ? ' bestChoice' : ''}`}>
+                        {colProp.value}
                     </div>)
                 }
             </div >
@@ -27,27 +27,27 @@ class GridColumn extends React.Component<GridColumnProps, {}>{
     }
 }
 interface HandleGridColumnProps {
-    handleColProps: Record<string, { value: string, bestChoice: boolean }>
+    handleColProps: ColumnProperties
 };
 class HandleGridColumn extends React.Component<HandleGridColumnProps, {}>{
 
     render() {
         const { handleColProps } = this.props;
-        const columnValues = [{ value: handleColProps.name.value, bestChoice: false }];
-        Object
-            .keys(handleColProps)
-            .filter(value => value !== 'name')
-            .sort((a, b) => (+handleColProps[a].value) - (+handleColProps[b].value))
+        const handleValues = handleColProps.values;
+        const columnValues = [{ value: handleValues.name.value, bestChoice: false }];
+        handleColProps
+            .getRowHandles()
+            .sort((a, b) => (+handleValues[a].value) - (+handleValues[b].value))
             .forEach(key => columnValues.push({ value: key, bestChoice: false }))
         return (
             <div className='qoutesGridColumn handleColumn'>
                 {columnValues.map((colProp, index) =>
-                    <div className='qoutesGridCell'>
-                        ${colProp.value}
+                    <div className='GridCell'>
+                        {colProp.value}
                     </div>)
                 }
             </div >
         );
     }
 }
-export default GridColumn;
+export { GridColumn, HandleGridColumn };

@@ -1,49 +1,47 @@
 import React from 'react';
 import './qoutesGrid.css';
-import GridColumn from './gridColumn';
+import { GridColumn, HandleGridColumn } from './gridColumn';
+import { ValueColumnProperties, ColumnProperties } from './defColTypes';
 interface QoutesItem {
   rates: Record<string, number>,
   timestamp: number,
   base: string,
   date: string,
 };
-interface valueColumnProperties {
-  value: string,
-  bestChoice: boolean
-}
-interface columnProperties {
-  values: Record<string, valueColumnProperties>
-  , index: number
-}
+
 interface QoutesGridState {
   qoutesItems: Map<string, QoutesItem>,
-  columnHandleProperties: Record<string, valueColumnProperties>,
-  columnsProperties: Map<string, columnProperties>
+  columnHandleProperties: ColumnProperties,
+  columnsProperties: Map<string, ColumnProperties>,
+  columnCount: number
 };
 
-interface QoutesGridProps { urlsAndNames: string[][], significantDigits: number };
+interface QoutesGridProps { urlsAndNames: string[][], significantDigits: number, rows: number };
 
 class QoutesGrid extends React.Component<QoutesGridProps, QoutesGridState>{
   state: QoutesGridState = {
     qoutesItems: new Map<string, QoutesItem>(),
-    columnHandleProperties: {},
-    columnsProperties: new Map<string, columnProperties>()
+    columnHandleProperties: new ColumnProperties(this.props.rows, 'hanle'),
+    columnsProperties: new Map<string, ColumnProperties>(this.props.urlsAndNames.map((urlAndName, index) => [urlAndName[1], new ColumnProperties(this.props.rows, index, urlAndName[1])])),
+    columnCount: this.props.urlsAndNames.length + 1
   }
   componentDidMount() {
     const urlsAndNames = this.props.urlsAndNames;
+    console.log(this.state.columnsProperties);
     this.handleFetch(urlsAndNames[0][0]);
     urlsAndNames.forEach((urlAndName, index) => this.itemFetch(urlAndName, false, index));
   }
 
   render() {
-    const { columnHandleProperties } = { ...this.state };
+    const { columnHandleProperties, columnCount } = { ...this.state };
     const arrayColProps = Array
       .from(this.state.columnsProperties, ([key, data]) => data)
       .sort((a, b) => a.index - b.index);
     return (
       <div className="Grid">
-        <div className="GridBody">
-          {arrayColProps.map(value => (<GridColumn handleColProps={columnHandleProperties} colProps={value.values} />))}
+        <div className="GridBody" style={{ 'gridTemplateColumns': new Array(columnCount).fill('auto').join(' ') }}>
+          <HandleGridColumn handleColProps={columnHandleProperties} />
+          {arrayColProps.map(colProps => (<GridColumn handleColProps={columnHandleProperties} colProps={colProps} />))}
         </div>
       </div>
     )
@@ -63,16 +61,16 @@ class QoutesGrid extends React.Component<QoutesGridProps, QoutesGridState>{
       await this.itemFetch([curUrl, name], poll, curIndex)
     } else {
       const qoutesItem: QoutesItem = await response.json();
-      const colProp: Record<string, valueColumnProperties> = this.generateColumnPropertiesObj(name, qoutesItem, 'value');
-      const colsProps = new Map<string, columnProperties>(this.state.columnsProperties)
-        .set(name, { values: colProp, index: curIndex });
-      this.checkBestChoice(colsProps);
+      const colProp: Record<string, ValueColumnProperties> = this.generateColumnPropertiesObj(name, qoutesItem, 'value');
+      const colsProps = new Map<string, ColumnProperties>(this.state.columnsProperties)
+        .set(name, new ColumnProperties(colProp, curIndex));
+      this.checkBestChoiceInRow(colsProps, 'min');
       this.setState(prevState => {
         const qoutesItems = new Map<string, QoutesItem>(prevState.qoutesItems).set(name, qoutesItem);
         return { qoutesItems: qoutesItems, columnsProperties: colsProps }
       }
       );
-      // this.itemFetch([url, name], true, curIndex);
+      this.itemFetch([url, name], true, curIndex);
     }
   }
 
@@ -86,48 +84,44 @@ class QoutesGrid extends React.Component<QoutesGridProps, QoutesGridState>{
       await this.handleFetch(url)
     } else {
       const qoutesItem: QoutesItem = await response.json();
-      const colsProps: Record<string, valueColumnProperties> = this.generateColumnPropertiesObj('Pair name/market', qoutesItem, 'index');
+      const colsProps: Record<string, ValueColumnProperties> = this.generateColumnPropertiesObj('Pair name/market', qoutesItem, 'index');
       this.setState({
-        columnHandleProperties: colsProps
+        columnHandleProperties: new ColumnProperties(colsProps, 0)
       });
     }
   }
 
-  checkBestChoice = (colsProps: Map<string, columnProperties>) => {
-    const sorceNames = Array.from(colsProps.keys());
+  checkBestChoiceInRow = (colsProps: Map<string, ColumnProperties>, sortMode: 'min' | 'max') => {
+    const colNames = Array.from(colsProps.keys());
     const findObj: Record<string, Record<string, string>[]> = {}
-    for (let i = 0; i < sorceNames.length; i++) {
-      const curValues = colsProps.get(sorceNames[i])?.values;
-      if (curValues !== undefined) {
-        const typesСurrencies = Object.keys(curValues);
-        for (let j = 0; j < typesСurrencies.length; j++) {
-          if (typesСurrencies[j] !== 'name')
-            if (typesСurrencies[j] in findObj)
-              findObj[typesСurrencies[j]].push({ value: curValues[typesСurrencies[j]].value, sorceName: sorceNames[i] })
-            else
-              findObj[typesСurrencies[j]] = [{ value: curValues[typesСurrencies[j]].value, sorceName: sorceNames[i] }];
-        }
+    for (let i = 0; i < colNames.length; i++) {
+      const colProp = colsProps.get(colNames[i])!;
+      const colValues = colProp.values;
+      const rowsTypes = colProp.getRowHandles();
+      for (let j = 0; j < rowsTypes.length; j++) {
+        if (rowsTypes[j] in findObj)
+          findObj[rowsTypes[j]].push({ value: colValues![rowsTypes[j]].value, sorceName: colNames[i] })
+        else
+          findObj[rowsTypes[j]] = [{ value: colValues![rowsTypes[j]].value, sorceName: colNames[i] }];
       }
     }
-    for (let typeСurrency in findObj) {
-      findObj[typeСurrency].sort((a, b) => (+a.value) - (+b.value));
+    for (let rowType in findObj) {
+      findObj[rowType].sort((a, b) => ((+a.value) - (+b.value)) * (-1) ** (sortMode === 'max' ? 1 : 0));
       let bestChoiceFlag = false;
-      console.log(findObj[typeСurrency]);
-      if (findObj[typeСurrency].length > 1 && +findObj[typeСurrency][0].value < +findObj[typeСurrency][1].value)
+      if (findObj[rowType].length > 1 && +findObj[rowType][0].value < +findObj[rowType][1].value)
         bestChoiceFlag = true;
-      findObj[typeСurrency].forEach((item, index) => {
+      findObj[rowType].forEach((item, index) => {
         const colProp = { ...colsProps.get(item.sorceName) };
-        console.log(index === 0 && bestChoiceFlag, bestChoiceFlag);
-        colProp!.values![typeСurrency].bestChoice = index === 0 && bestChoiceFlag;
+        colProp!.values![rowType].bestChoice = index === 0 && bestChoiceFlag;
       })
     }
   }
 
   generateColumnPropertiesObj = (name: string, qoutesItem: QoutesItem, typePlh: 'value' | 'index') => {
-    const columnItem: string[] = [name];
-    const currencies: string[] = (Object.keys(qoutesItem.rates) as Array<string>);
+    const columnItem = [name];
+    const currencies = Object.keys(qoutesItem.rates);
     columnItem.push(...currencies.map(item => `${item}/${qoutesItem.base}`));
-    const handle: Record<string, valueColumnProperties> = { name: { value: name, bestChoice: false } };
+    const colProperty: Record<string, ValueColumnProperties> = { name: new ValueColumnProperties(name) };
     columnItem.push(...currencies
       .slice(0, -1)
       .map((item, index) => currencies
@@ -138,15 +132,15 @@ class QoutesGrid extends React.Component<QoutesGridProps, QoutesGridState>{
     for (let i = 1; i < columnItem.length; i++) {
       const item = columnItem[i];
       if (typePlh === 'index')
-        handle[item] = { value: i + '', bestChoice: false };
+        colProperty[item] = { value: i + '', bestChoice: false };
       else if (typePlh === 'value') {
         const keys: string[] = item.split('/');
         let value = (keys[1] !== qoutesItem.base ? (qoutesItem.rates[keys[0]] / qoutesItem.rates[keys[1]])
           : (qoutesItem.rates[keys[0]])).toFixed(this.props.significantDigits);
-        handle[item] = { value: value, bestChoice: false };
+        colProperty[item] = { value: value, bestChoice: false };
       }
     }
-    return handle;
+    return colProperty;
   }
 }
 
