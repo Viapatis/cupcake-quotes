@@ -42,7 +42,7 @@ class HandleGridColumn extends React.Component<HandleGridColumnProps, {}>{
         return (
             <div className='qoutesGridColumn handleColumn'>
                 {columnValues.map((colProp, index) =>
-                    <div key={colProp.key} className='GridCell'>
+                    <div key={colProp.key} className='GridCell handleCell'>
                         {colProp.value}
                     </div>)
                 }

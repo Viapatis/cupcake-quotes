@@ -22,7 +22,11 @@ class QoutesGrid extends React.Component<QoutesGridProps, QoutesGridState>{
   state: QoutesGridState = {
     qoutesItems: new Map<string, QoutesItem>(),
     columnHandleProperties: new ColumnProperties(this.props.rows, 'hanle'),
-    columnsProperties: new Map<string, ColumnProperties>(this.props.urlsAndNames.map((urlAndName, index) => [urlAndName[1], new ColumnProperties(this.props.rows, index, urlAndName[1])])),
+    columnsProperties: new Map<string, ColumnProperties>(
+      this.props.urlsAndNames.map((urlAndName, index) =>
+        [urlAndName[1], new ColumnProperties(this.props.rows, index, urlAndName[1])]
+      )
+    ),
     columnCount: this.props.urlsAndNames.length + 1
   }
   componentDidMount() {
@@ -40,7 +44,12 @@ class QoutesGrid extends React.Component<QoutesGridProps, QoutesGridState>{
       <div className="Grid">
         <div className="GridBody" style={{ 'gridTemplateColumns': new Array(columnCount).fill('auto').join(' ') }}>
           <HandleGridColumn handleColProps={columnHandleProperties} />
-          {arrayColProps.map(colProps => (<GridColumn handleColProps={columnHandleProperties} key={colProps.getName()} colProps={colProps} />))}
+          {arrayColProps.map(colProps =>
+          (<GridColumn
+            handleColProps={columnHandleProperties}
+            key={colProps.getName()}
+            colProps={colProps} />)
+          )}
         </div>
       </div>
     )

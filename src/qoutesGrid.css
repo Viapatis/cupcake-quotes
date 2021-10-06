@@ -1,0 +1,10 @@
+.GridBody{
+    display:grid;
+    font:18 px "Times New Roman" ;
+    color:#0c0c0c;
+    margin:auto auto;
+    padding:10px;
+}
+.Grid{
+    width:100%;
+}

@@ -1,0 +1,12 @@
+.GridCell{
+    border:2px solid #979797;
+    padding:30px;
+    background:#f2f2f2;
+    min-width: 190px;
+    box-sizing: border-box;
+}
+.bestChoice{
+    color:#ffffff;
+    background:#0091ff;
+}
+
