@@ -6,7 +6,10 @@ import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
-    <QoutesGrid urlsAndNames={new Map<string, string>(["first", "second", "third"].map(item => [item, `http://localhost:3000/api/v1/${item}`]))} />
+    <QoutesGrid
+      urlsAndNames={["first", "second", "third"].map(item => [`http://localhost:3000/api/v1/${item}`, item])}
+      significantDigits={2}
+    />
   </React.StrictMode>,
   document.getElementById('root')
 );
