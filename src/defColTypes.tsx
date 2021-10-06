@@ -45,5 +45,8 @@ class ColumnProperties {
     getRowHandles = (exclude: string = 'name') => {
         return Object.keys(this.values).filter(handle => handle !== exclude)
     }
+    getName = () => {
+        return this.values.name.value;
+    }
 }
 export { ValueColumnProperties, ColumnProperties };

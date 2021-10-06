@@ -27,7 +27,6 @@ class QoutesGrid extends React.Component<QoutesGridProps, QoutesGridState>{
   }
   componentDidMount() {
     const urlsAndNames = this.props.urlsAndNames;
-    console.log(this.state.columnsProperties);
     this.handleFetch(urlsAndNames[0][0]);
     urlsAndNames.forEach((urlAndName, index) => this.itemFetch(urlAndName, false, index));
   }
@@ -41,7 +40,7 @@ class QoutesGrid extends React.Component<QoutesGridProps, QoutesGridState>{
       <div className="Grid">
         <div className="GridBody" style={{ 'gridTemplateColumns': new Array(columnCount).fill('auto').join(' ') }}>
           <HandleGridColumn handleColProps={columnHandleProperties} />
-          {arrayColProps.map(colProps => (<GridColumn handleColProps={columnHandleProperties} colProps={colProps} />))}
+          {arrayColProps.map(colProps => (<GridColumn handleColProps={columnHandleProperties} key={colProps.getName()} colProps={colProps} />))}
         </div>
       </div>
     )
